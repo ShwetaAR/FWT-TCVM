@@ -2,6 +2,8 @@ package com.yash.tcvm.builder;
 
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.yash.tcvm.configuration.AbstractBeverageConfigurer;
 import com.yash.tcvm.configuration.BeverageConfiguration;
 import com.yash.tcvm.dao.ContainerDao;
@@ -14,8 +16,14 @@ import com.yash.tcvm.model.Container;
 import com.yash.tcvm.model.Order;
 import com.yash.tcvm.service.ContainerService;
 import com.yash.tcvm.serviceimpl.ContainerServiceImpl;
+import com.yash.tcvm.serviceimpl.OrderServiceImpl;
 
 public abstract class AbstractBeverageBuilder implements BeverageBuilder {
+
+	/**
+	 * logger is used for logging and to write messages to the configured log files
+	 */
+	private static Logger logger = Logger.getLogger(OrderServiceImpl.class);
 
 	BeverageConfiguration beverageConfigurer;
 	ContainerDao containerDao = new ContainerDaoImpl();
@@ -30,24 +38,23 @@ public abstract class AbstractBeverageBuilder implements BeverageBuilder {
 	}
 
 	public boolean prepareDrink(Order order) {
-		boolean ifUnderflow =checkUnderFlow(order);
+		boolean ifUnderflow = checkUnderFlow(order);
 		order.setStatus(true);
-		boolean isUpdated=updateContainers(order, ifUnderflow);
+		boolean isUpdated = updateContainers(order, ifUnderflow);
 		int rowAffected = insertOrder(order);
-		if(rowAffected==1&&ifUnderflow==true&&isUpdated==true ){
+		if (rowAffected == 1 && ifUnderflow == true && isUpdated == true) {
 			return true;
-		}
-		else
-		return false;
+		} else
+			return false;
 	}
 
 	private int insertOrder(Order order) {
 		int rowAffected = 0;
 		if (order.getStatus() == true) {
 			OrderDao orderDao = new OrderDaoImpl();
-			 rowAffected = orderDao.updateOrder(order);
+			rowAffected = orderDao.updateOrder(order);
 		}
-		
+
 		return rowAffected;
 	}
 
@@ -70,14 +77,14 @@ public abstract class AbstractBeverageBuilder implements BeverageBuilder {
 				try {
 					throw new ContainerUnderflowException(entry.getKey() + "Insufficient");
 				} catch (ContainerUnderflowException exception) {
-					System.out.println("-----Container UnderFlow-----");
-					System.out.println("------Refill Container-----");
+					logger.error(entry.getKey()+"-----Container is Insufficient -----");
+					logger.error("------Refill Container-----");
 
 				}
 			}
 		}
 		return canBeUpdated;
-		
+
 	}
 
 	private boolean isUnderFlowCondition(double qtyWasted, double qtyConsumed, double qtyAvailableInContainer,
@@ -94,25 +101,17 @@ public abstract class AbstractBeverageBuilder implements BeverageBuilder {
 
 			for (Map.Entry<Ingredient, Double> entry : consumption.entrySet()) {
 				Container container = containerService.getContainerByIngredient(entry.getKey());
-				System.out.println(container.getIngredient() + "updated one ");
 				double qtyWasted = wastage.get(entry.getKey());
 				double qtyConsumed = entry.getValue();
 				double qtyAvailableInContainer = container.getCurrentAvailability();
 				int noOfCups = order.getQuantity();
 				double currentAvailability = (qtyAvailableInContainer - (noOfCups * (qtyConsumed + qtyWasted)));
 				container.setCurrentAvailability(qtyAvailableInContainer - (noOfCups * (qtyConsumed + qtyWasted)));
-				containerDao.updateContainer(container);
+				containerService.updateContainer(container);
 
-				/*
-				 * System.out.println("Max capacity: " +
-				 * container.getMaxCapacity() + " Current availability: " +
-				 * container.getCurrentAvailability());
-				 */
 			}
-			
 
-		}
-		else
+		} else
 			return !canBeUpdated;
 		return canBeUpdated;
 	}

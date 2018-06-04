@@ -1,1 +1,27 @@
-[{"ingredient":"SUGAR","maxCapacity":8000.0,"currentAvailability":7252.0},{"ingredient":"MILK","maxCapacity":10000.0,"currentAvailability":9990.0},{"ingredient":"WATER","maxCapacity":15000.0,"currentAvailability":12715.0},{"ingredient":"TEA","maxCapacity":2000.0,"currentAvailability":1940.0},{"ingredient":"COFFEE","maxCapacity":8000.0,"currentAvailability":7870.0}]
+[
+	{
+		"ingredient": "SUGAR",
+		"maxCapacity": 8000.0,
+		"currentAvailability": 7932.0
+	},
+	{
+		"ingredient": "MILK",
+		"maxCapacity": 10000.0,
+		"currentAvailability": 9968.0
+	},
+	{
+		"ingredient": "WATER",
+		"maxCapacity": 15000.0,
+		"currentAvailability": 14740.0
+	},
+	{
+		"ingredient": "TEA",
+		"maxCapacity": 2000.0,
+		"currentAvailability": 1976.0
+	},
+	{
+		"ingredient": "COFFEE",
+		"maxCapacity": 8000.0,
+		"currentAvailability": 8000.0
+	}
+]

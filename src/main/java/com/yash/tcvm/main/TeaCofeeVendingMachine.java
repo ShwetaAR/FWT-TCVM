@@ -8,7 +8,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -38,6 +40,11 @@ import com.yash.tcvm.serviceimpl.ContainerServiceImpl;
 import com.yash.tcvm.serviceimpl.OrderServiceImpl;
 
 public class TeaCofeeVendingMachine {
+
+	/**
+	 * logger is used for logging and to write messages to the configured log files
+	 */
+	private static Logger logger = Logger.getLogger(OrderServiceImpl.class);
 
 	private Scanner scanner;
 	private static BufferedReader br;
@@ -89,6 +96,7 @@ public class TeaCofeeVendingMachine {
 	}
 
 	public void displayMenu() {
+
 		String choice;
 		do {
 			File file = new File(Constants.TCVM_MENU_FILE_PATH);
@@ -97,16 +105,17 @@ public class TeaCofeeVendingMachine {
 			int key = scanner.nextInt();
 			switch (key) {
 			case 1:
-				makeCoffee(BeverageType.COFFEE, CoffeeBuilder.getDrinkBuilder());
+				makeCoffee(BeverageType.COFFEE, CoffeeBuilder.getDrinkBuilder(), CoffeeConfiguration.RATE);
 				break;
 			case 2:
-				makeTea(BeverageType.TEA, TeaBuilder.getDrinkBuilder());
+				makeTea(BeverageType.TEA, TeaBuilder.getDrinkBuilder(), TeaConfiguration.RATE);
 				break;
 			case 3:
-				makeBlackCofeee(BeverageType.BLACK_COFFEE, BlackCoffeeBuilder.getDrinkBuilder());
+				makeBlackCofeee(BeverageType.BLACK_COFFEE, BlackCoffeeBuilder.getDrinkBuilder(),
+						BlackCoffeeConfiguration.RATE);
 				break;
 			case 4:
-				makeBlackTea(BeverageType.BLACK_TEA, BlackTeaBuilder.getDrinkBuilder());
+				makeBlackTea(BeverageType.BLACK_TEA, BlackTeaBuilder.getDrinkBuilder(), BlackTeaConfiguration.RATE);
 				break;
 			case 5:
 				refillContainer();
@@ -137,11 +146,12 @@ public class TeaCofeeVendingMachine {
 			int rownum = 0;
 			for (Order user : listOfOrders) {
 				Row row = sheet.createRow(rownum++);
-				createList(user, row);
+				createCell(user, row);
 			}
-			FileOutputStream out = new FileOutputStream(new File("src/main/resources/excelFiles/report.xlsx"));
+			FileOutputStream out = new FileOutputStream(new File(Constants.REPORT_FILE_PATH));
 			workbook.write(out);
 			out.close();
+			logger.info("Report is created in report.xlsx file");
 
 		} catch (
 
@@ -151,7 +161,7 @@ public class TeaCofeeVendingMachine {
 
 	}
 
-	private void createList(Order order, Row row) {
+	private void createCell(Order order, Row row) {
 		double sale = 0;
 		sale = checkForBeverageTypeAndItsTotalSale(sale, order);
 
@@ -176,9 +186,9 @@ public class TeaCofeeVendingMachine {
 
 	private void displayContainersStatus(Container container) {
 		if (container.getIngredient().equals(Ingredient.WATER) || container.getIngredient().equals(Ingredient.MILK)) {
-			System.out.println("-" + container.getIngredient() + ":" + container.getCurrentAvailability() + " ml");
+			System.out.println("-" + container.getIngredient() + ":  " + container.getCurrentAvailability() + " ml");
 		} else
-			System.out.println("-" + container.getIngredient() + ":" + container.getCurrentAvailability() + " gm");
+			System.out.println("-" + container.getIngredient() + ":  " + container.getCurrentAvailability() + " gm");
 	}
 
 	private void checkTotalSale() {
@@ -203,7 +213,6 @@ public class TeaCofeeVendingMachine {
 
 	private double checkForBeverageTypeAndItsTotalSale(double sale, Order order) {
 		if (order.getBeverageTypeEnum().equals(BeverageType.TEA)) {
-
 			sale = order.getQuantity() * TeaConfiguration.RATE;
 		}
 		if (order.getBeverageTypeEnum().equals(BeverageType.COFFEE)) {
@@ -236,35 +245,44 @@ public class TeaCofeeVendingMachine {
 		return rowAffected;
 	}
 
-	private void makeBlackTea(BeverageType blackTea, BeverageBuilder beverageBuilder) {
-		takeUserInput(blackTea, beverageBuilder);
+	private void makeBlackTea(BeverageType blackTea, BeverageBuilder beverageBuilder, double rate) {
+		takeUserInput(blackTea, beverageBuilder, rate);
 
 	}
 
-	private void makeBlackCofeee(BeverageType blackCoffee, BeverageBuilder beverageBuilder) {
-		takeUserInput(blackCoffee, beverageBuilder);
+	private void makeBlackCofeee(BeverageType blackCoffee, BeverageBuilder beverageBuilder, double rate) {
+		takeUserInput(blackCoffee, beverageBuilder, rate);
 
 	}
 
-	private void makeTea(BeverageType tea, BeverageBuilder beverageBuilder) {
-		takeUserInput(tea, beverageBuilder);
+	private void makeTea(BeverageType tea, BeverageBuilder beverageBuilder, double rate) {
+		takeUserInput(tea, beverageBuilder, rate);
 
 	}
 
-	private void makeCoffee(BeverageType coffee, BeverageBuilder beverageBuilder) {
-		takeUserInput(coffee, beverageBuilder);
+	private void makeCoffee(BeverageType coffee, BeverageBuilder beverageBuilder, double rate) {
+		takeUserInput(coffee, beverageBuilder, rate);
 
 	}
 
-	private void takeUserInput(BeverageType beverageType, BeverageBuilder beverageBuilder) {
+	private void takeUserInput(BeverageType beverageType, BeverageBuilder beverageBuilder, double rate) {
 		System.out.println("Enter number of cups " + beverageType + " to be served");
 		int orderQuantity = scanner.nextInt();
-		BeverageBuilder BulidbeverageBuilder = beverageBuilder;
-		boolean isDrinkPrepared = BulidbeverageBuilder.prepareDrink(new Order(orderQuantity, beverageType));
-		if (isDrinkPrepared == true) {
-			System.out.println(orderQuantity + " cups" + beverageType + "  prepared");
-		} else
-			System.out.println("Try Again");
+		double sale = 0;
+		if (orderQuantity <= 0) {
+			logger.error("Order quantity cannot be negative or zero");
+		}
+
+		else {
+			BeverageBuilder BulidbeverageBuilder = beverageBuilder;
+			boolean isDrinkPrepared = BulidbeverageBuilder.prepareDrink(new Order(orderQuantity, beverageType));
+			if (isDrinkPrepared == true) {
+				System.out.println(orderQuantity + " cups " + beverageType + "  prepared");
+				sale = orderQuantity * rate;
+				System.out.println("Price--> Rs" + sale + " ");
+			} else
+				System.out.println("Try Again");
+		}
 
 	}
 

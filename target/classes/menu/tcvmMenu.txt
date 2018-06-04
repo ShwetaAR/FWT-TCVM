@@ -1,6 +1,6 @@
-=======================
+===============================
 	SELECT OPTIONS:
-=======================
+===============================
 1. Make Coffee
 2. Make Tea
 3. Make Black Coffee
@@ -9,3 +9,7 @@
 6. Check Total Sale
 7. Container Status
 8. Generate Report
+
+===============================
+ Developed By: Shweta Baberia
+===============================

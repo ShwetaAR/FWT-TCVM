@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.google.gson.Gson;
 import com.yash.tcvm.constant.Constants;
 import com.yash.tcvm.dao.OrderDao;
@@ -11,9 +13,17 @@ import com.yash.tcvm.enumeration.BeverageType;
 import com.yash.tcvm.exception.EmptyException;
 import com.yash.tcvm.exception.InvalidQuantityException;
 import com.yash.tcvm.model.Order;
+import com.yash.tcvm.serviceimpl.OrderServiceImpl;
 import com.yash.tcvm.util.FileUtil;
 
 public class OrderDaoImpl implements OrderDao {
+	
+
+	/**
+	 * logger is used for logging and to write messages to the configured log files
+	 */
+	private static Logger logger = Logger.getLogger(OrderDaoImpl.class);
+	
 	private Gson gson;
 	private String json;
 	private List<Order> orderList;
@@ -109,8 +119,13 @@ public class OrderDaoImpl implements OrderDao {
 	}
 
 	private void checkForNegativeQuantity(Order order) {
-		if (order.getQuantity() < 0) {
-			throw new InvalidQuantityException("Quantity cannot be negative");
+		try {
+			if (order.getQuantity() < 0) {
+				throw new InvalidQuantityException("Order Quantity cannot be negative");
+			}
+		} catch (InvalidQuantityException exception) {
+			logger.error("Order Quantity cannot be negative");
+			logger.info("Try Again");
 		}
 	}
 

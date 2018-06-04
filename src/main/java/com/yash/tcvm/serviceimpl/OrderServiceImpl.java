@@ -18,6 +18,7 @@ public class OrderServiceImpl implements OrderService {
 
 	public OrderServiceImpl(OrderDao orderDao) {
 		this.orderDao = orderDao;
+
 	}
 
 	public int insertOrder(Order order) {
